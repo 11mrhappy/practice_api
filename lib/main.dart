@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 
 void main() {
   runApp(MyApp());
@@ -8,59 +11,91 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
+      title: 'Hatchout',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: TopPage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
 
-  final String title;
-
+class TopPage extends StatefulWidget {
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _TopPageState createState() => _TopPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _TopPageState extends State<TopPage> {
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
+  final zipCodeController = TextEditingController();
+  final addressController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
+        appBar: AppBar(
+          title: Text('GETメソッド'),
+          centerTitle: true,
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ),
+        body: Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Container(child: Text('郵便番号', style: TextStyle(fontSize: 18.0),), width: 90),
+                  Expanded(
+                    child: TextFormField(
+                      maxLines: 1,
+                      controller: zipCodeController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: '郵便番号',
+                        suffixIcon: IconButton(
+                          highlightColor: Colors.transparent,
+                          icon: Container(
+                              width: 36.0, child: new Icon(Icons.clear)),
+                          onPressed: () {
+                            zipCodeController.clear();
+                            addressController.clear();
+                          },
+                          splashColor: Colors.transparent,
+                        ),
+                      ),
+                    ),
+                  ),
+                  OutlineButton(
+                    child: Text('検索'),
+                    onPressed: () async {
+                      var result = await get('https://zipcloud.ibsnet.co.jp/api/search?zipcode=${zipCodeController.text}');
+                      Map<String, dynamic> map = jsonDecode(result.body)['results'][0];
+                      addressController.text = '${map['address1']}${map['address2']}${map['address3']}';
+                    },
+                  ),
+                ],
+              ),
+              Padding(padding: EdgeInsets.symmetric(vertical: 10.0)),
+              Row(
+                children: [
+                  Container(child: Text('住所', style: TextStyle(fontSize: 18.0)), width: 90,),
+                  Expanded(
+                    child: TextFormField(
+                      maxLines: 1,
+                      controller: addressController,
+                      decoration: InputDecoration(
+                        labelText: '住所',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        )
     );
   }
+
 }
